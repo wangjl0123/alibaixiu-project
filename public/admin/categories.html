@@ -1,3 +1,7 @@
+<script src="/login/status"></script>
+<script>
+    if (!isLogin) location.href = 'login.html';
+</script>
 <!DOCTYPE html>
 <html lang="zh-CN">
 
@@ -20,8 +24,8 @@
         <nav class="navbar">
             <button class="btn btn-default navbar-btn fa fa-bars"></button>
             <ul class="nav navbar-nav navbar-right">
-                <li><a href="profile.html"><i class="fa fa-user"></i>个人中心</a></li>
-                <li><a href="login.html"><i class="fa fa-sign-out"></i>退出</a></li>
+                <li><a href="password-reset.html"><i class="fa fa-user"></i>修改密码</a></li>
+                <li><a href="javascript:;"><i class="fa fa-sign-out"></i>退出</a></li>
             </ul>
         </nav>
         <div class="container-fluid">
@@ -33,7 +37,7 @@
         <strong>错误！</strong>发生XXX错误
       </div> -->
             <div class="row">
-                <div class="col-md-4">
+                <div class="col-md-4" id="formBox">
                     <form id="addCategory">
                         <h2>添加分类</h2>
                         <div class="form-group">
@@ -61,7 +65,8 @@
                                 <th class="text-center" width="100">操作</th>
                             </tr>
                         </thead>
-                        <tbody id="cateListBox">
+                        <tbody id="categoryBox">
+
                         </tbody>
                     </table>
                 </div>
@@ -108,35 +113,52 @@
     <script src="../assets/vendors/jquery/jquery.js"></script>
     <script src="../assets/vendors/bootstrap/js/bootstrap.js"></script>
     <script src="../assets/vendors/art-template/template-web.js"></script>
-    <script>
-        NProgress.done()
-    </script>
-    <script type="text/html" id="listTpl">
+    <!-- 分类列表模板 -->
+    <script type="text/html" id="categoryListTpl">
         {{each data}}
         <tr>
             <td class="text-center"><input type="checkbox"></td>
             <td>{{$value.title}}</td>
             <td class="text-center">
-                <a href="javascript:;" class="btn btn-info btn-xs">编辑</a>
-                <a href="javascript:;" class="btn btn-danger btn-xs">删除</a>
+                <a href="javascript:;" class="btn btn-info btn-xs edit" data-id="{{$value._id}}">编辑</a>
+                <a href="javascript:;" class="btn btn-danger btn-xs delete" data-id="{{$value._id}}">删除</a>
             </td>
         </tr>
         {{/each}}
     </script>
+    <!-- 分类数据修改模板 -->
+    <script type="text/html" id="modifyCategoryTpl">
+        <form id="modifyCategory" data-id="{{_id}}">
+            <h2>修改分类</h2>
+            <div class="form-group">
+                <label>名称</label>
+                <input class="form-control" type="text" placeholder="请输入分类名称" name="title" value="{{title}}">
+            </div>
+            <div class="form-group">
+                <label>图标</label>
+                <input class="form-control" type="text" placeholder="请输入分类图标类名" name="className" value="{{className}}">
+            </div>
+            <div class="form-group">
+                <button class="btn btn-primary" type="submit">修改</button>
+            </div>
+        </form>
+    </script>
+    <script src="../assets/js/common.js"></script>
+    <script>
+        NProgress.done()
+    </script>
     <script>
         $(function() {
+            // 当添加分类表单发生提交行为的时候
             $('#addCategory').on('submit', function() {
                 // 获取用户在表单中输入的内容
                 var formData = $(this).serialize();
-                console.log(formData);
-
                 // 向服务器端发送请求 添加分类
                 $.ajax({
                         type: 'post',
                         url: '/categories',
                         data: formData,
-                        success: function(data) {
-
+                        success: function() {
                             location.reload();
                         }
                     })
@@ -150,11 +172,62 @@
                 url: '/categories',
                 success: function(response) {
                     // 将服务器端返回的数据和HTML模板进行拼接
-                    var html = template('listTpl', {
+                    var html = template('categoryListTpl', {
                         data: response
                     });
                     // 将拼接好的内容放到页面中
-                    $('#cateListBox').html(html);
+                    $('#categoryBox').html(html);
+                }
+            });
+
+            // 为编辑按钮添加点击事件
+            $('#categoryBox').on('click', '.edit', function() {
+                // 获取要修改的分类数据的id
+                var id = $(this).attr('data-id');
+                // 根据id获取分类数据的详细信息
+                $.ajax({
+                    type: 'get',
+                    url: `/categories/${id}`,
+                    success: function(response) {
+                        console.log(response)
+                        var html = template('modifyCategoryTpl', response);
+                        $('#formBox').html(html);
+                    }
+                })
+            });
+
+            // 当修改分类数据表单发生提交行为的时候
+            $('#formBox').on('submit', '#modifyCategory', function() {
+                // 获取管理员在表单中输入的内容
+                var formData = $(this).serialize();
+                // 获取要修改的分类id
+                var id = $(this).attr('data-id');
+                // 发送请求 修改分类数据
+                $.ajax({
+                        type: 'put',
+                        url: `/categories/${id}`,
+                        data: formData,
+                        success: function() {
+                            location.reload();
+                        }
+                    })
+                    // 阻止表单的默认提交行为
+                return false;
+            });
+
+            // 当删除按钮被点击的时候
+            $('#categoryBox').on('click', '.delete', function() {
+                if (confirm('您真的要执行删除操作吗')) {
+                    // 获取要删除的分类数据id
+                    var id = $(this).attr('data-id');
+                    // 向服务器端发送请求 删除分类数据
+                    $.ajax({
+                        type: 'delete',
+                        url: '/categories/' + id,
+                        success: function() {
+                            location.reload();
+                        }
+                    })
                 }
             });
         })

@@ -23,7 +23,6 @@ $(function() {
     $('#modifyBox').on('change', '#avatar', function() {
             var formData = new FormData();
             formData.append('avatar', this.files[0])
-
             $.ajax({
                 url: '/upload',
                 type: 'post',
