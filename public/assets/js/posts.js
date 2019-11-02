@@ -77,8 +77,8 @@ $('#postsBox').on('click', '.delete', function () {
 	}
 });
 //处理日期函数
-function formateDate(date){
-    date = new Date(date);
-    return date.getFullYear() + '-' + (date.getMonth() + 1) + '-' +date.getDate();
+function formateDate(date) {
+	date = new Date(date);
+	return date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate();
   }
   template.defaults.imports.formateDate = formateDate;
